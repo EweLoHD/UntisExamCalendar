@@ -106,79 +106,14 @@ public class MainFrame extends javax.swing.JFrame implements PropertyChangeListe
     }//GEN-LAST:event_listMouseClicked
 
     private void exportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportButtonActionPerformed
-        /*GoogleCalendarAPI calendarAPI = new GoogleCalendarAPI();
-        try {
-            calendarAPI.login();
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        } catch (GeneralSecurityException e) {
-            JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
-
-        try {
-            List<CalendarListEntry> calendars = calendarAPI.getCalendars();
-            ArrayList<String> possibilities = new ArrayList<>();
-
-            calendars.forEach(calendarListEntry -> {
-                String name = calendarListEntry.getSummary();
-                System.out.println(name);
-
-                if (name.contains("fungen")) {
-                    possibilities.add(0, name);
-                } else {
-                    possibilities.add(name);
-                }
-            });
-
-            String s = (String) JOptionPane.showInputDialog(
-                    this,
-                    "Select Calendar:",
-                    "Import Exams",
-                    JOptionPane.PLAIN_MESSAGE,
-                    null,
-                    possibilities.toArray(),
-                    possibilities.get(0));
-
-            String calendarId = "primary";
-
-            for (CalendarListEntry calendarListEntry : calendars) {
-                if (calendarListEntry.getSummary().equalsIgnoreCase(s)) {
-                    System.out.println("bruhh");
-                    calendarId = calendarListEntry.getId();
-                }
-            }
-
-
-            ProgressMonitor progressMonitor = new ProgressMonitor(this, "Importing Exams...", "Importing Exams...", 0, exams.size());
-
-
-            for (int i = 0; i < exams.size(); i++) {
-                Exam e = exams.get(i);
-
-                calendarAPI.addEventToCalendar(e.toEvent(), calendarId);
-                progressMonitor.setProgress(i);
-            }
-
-
-            JOptionPane.showMessageDialog(this, "Imported Exams successfully!", "Units Exams", JOptionPane.INFORMATION_MESSAGE);
-            System.exit(0);
-
-
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }*/
-
+        
         progressMonitor = new ProgressMonitor(this,
                 "Exporting exams...",
-                "", 0, exams.size());
+                "", 0, 100);
         progressMonitor.setProgress(0);
         task = new Task();
         task.addPropertyChangeListener(this);
         task.execute();
-
 
     }//GEN-LAST:event_exportButtonActionPerformed
 
@@ -290,17 +225,18 @@ public class MainFrame extends javax.swing.JFrame implements PropertyChangeListe
 
                 for (CalendarListEntry calendarListEntry : calendars) {
                     if (calendarListEntry.getSummary().equalsIgnoreCase(s)) {
-                        System.out.println("bruhh");
                         calendarId = calendarListEntry.getId();
                     }
                 }
 
+                double mult = 100 / (exams.size() - 1);
 
                 for (int i = 0; i < exams.size(); i++) {
                     Exam e = exams.get(i);
 
-                    calendarAPI.addEventToCalendar(e.toEvent(), calendarId);
-                    setProgress(i);
+                    setProgress((int) (i * mult));
+                    
+                    if(e.isSelected()) calendarAPI.addEventToCalendar(e.toEvent(), calendarId);
                 }
 
                 progressMonitor.close();

@@ -45,6 +45,7 @@ public class Untis {
             exam.setName(j.getString("name"));
             exam.setSubject(j.getString("subject"));
             exam.setText(j.getString("text"));
+            exam.setExamType(j.getString("examType"));
             
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
             

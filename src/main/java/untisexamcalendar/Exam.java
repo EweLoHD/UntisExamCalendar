@@ -23,6 +23,7 @@ public class Exam {
     private String name;
     private String subject;
     private String text;
+    private String examType;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private boolean selected;
@@ -50,6 +51,10 @@ public class Exam {
 
     public String getText() {
         return text;
+    }
+    
+    public String getExamType() {
+        return examType;
     }
 
     public LocalDateTime getStartTime() {
@@ -79,6 +84,10 @@ public class Exam {
     public void setText(String text) {
         this.text = text;
     }
+    
+    public void setExamType(String examType) {
+        this.examType = examType;
+    }
 
     public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;
@@ -88,10 +97,16 @@ public class Exam {
         this.endTime = endTime;
     }
     
+    
     public Event toEvent() {
         Event event = new Event();
 
-        event.setSummary(subject + " - " + name);
+        if(name.equalsIgnoreCase(subject)) {
+            event.setSummary(subject + " - " + examType);
+        } else {
+            event.setSummary(subject + " - " + name);
+        }
+        
         if(!text.isEmpty()) event.setDescription(text);
 
         event.setStart(convertDateTime(startTime));
