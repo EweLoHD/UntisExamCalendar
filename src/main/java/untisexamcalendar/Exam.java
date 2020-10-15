@@ -30,7 +30,7 @@ public class Exam {
 
     public Exam(String name, String subject, String text, LocalDateTime startTime, LocalDateTime endTime) {
         this.name = name;
-        this.subject = subject;
+        this.subject = subject.toUpperCase();
         this.text = text;
         this.startTime = startTime;
         this.endTime = endTime;

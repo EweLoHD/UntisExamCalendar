@@ -6,11 +6,12 @@
 package untisexamcalendar;
 
 import com.google.api.services.calendar.model.CalendarListEntry;
+import com.google.api.services.calendar.model.Event;
+import org.apache.commons.lang3.StringUtils;
 import untisexamcalendar.googlecalendar.GoogleCalendarAPI;
 
 import javax.swing.*;
-import java.awt.Rectangle;
-import java.awt.event.ActionListener;
+import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -30,14 +31,21 @@ public class MainFrame extends javax.swing.JFrame implements PropertyChangeListe
     private Exams exams = new Exams();
 
     private ProgressMonitor progressMonitor;
+    private String note;
     private Task task;
+
+    private ArrayList<Image> icons = new ArrayList<>();
 
     /**
      * Creates new form MainFrame
      */
     public MainFrame(Untis untis) {
+        icons.add(Toolkit.getDefaultToolkit().getImage(this.getClass().getClassLoader().getResource("icon-128x128.png")));
+        icons.add(Toolkit.getDefaultToolkit().getImage(this.getClass().getClassLoader().getResource("icon-16x16.png")));
+
         initComponents();
-        
+        setLocationRelativeTo(null);
+
         exams = untis.getExams();
         
         list.setListData(exams.toArray());
@@ -58,6 +66,8 @@ public class MainFrame extends javax.swing.JFrame implements PropertyChangeListe
         exportButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Untis Exam Calendar");
+        setIconImages(icons);
 
         list.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         list.setCellRenderer(new CheckListRenderer());
@@ -88,10 +98,10 @@ public class MainFrame extends javax.swing.JFrame implements PropertyChangeListe
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 704, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 628, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(exportButton)
-                .addGap(0, 9, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
@@ -108,9 +118,9 @@ public class MainFrame extends javax.swing.JFrame implements PropertyChangeListe
     private void exportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportButtonActionPerformed
         
         progressMonitor = new ProgressMonitor(this,
-                "Exporting exams...",
+                "Loading...",
                 "", 0, 100);
-        progressMonitor.setProgress(0);
+        //progressMonitor.setProgress(0);
         task = new Task();
         task.addPropertyChangeListener(this);
         task.execute();
@@ -121,10 +131,10 @@ public class MainFrame extends javax.swing.JFrame implements PropertyChangeListe
         if ("progress" == evt.getPropertyName() ) {
             int progress = (Integer) evt.getNewValue();
             progressMonitor.setProgress(progress);
-            String message =
-                    String.format("Completed %d%%.\n", progress);
-            progressMonitor.setNote(message);
-            if (progressMonitor.isCanceled() || task.isDone()) {
+            /*String message =
+                    String.format("Completed %d%%.\n", progress);*/
+            progressMonitor.setNote(note);
+            if (progressMonitor.isCanceled() || task.isDone() || task.isCancelled()) {
                 if (progressMonitor.isCanceled()) {
                     task.cancel(true);
                     System.out.println("Task canceled.\n");
@@ -182,7 +192,7 @@ public class MainFrame extends javax.swing.JFrame implements PropertyChangeListe
     class Task extends SwingWorker<Void, Void> {
         @Override
         public Void doInBackground() {
-            //int progress = 0;
+            double progress = 0;
             setProgress(0);
 
 
@@ -203,13 +213,15 @@ public class MainFrame extends javax.swing.JFrame implements PropertyChangeListe
 
                 calendars.forEach(calendarListEntry -> {
                     String name = calendarListEntry.getSummary();
-                    System.out.println(name);
 
-                    if (name.contains("fungen")) {
-                        possibilities.add(0, name);
-                    } else {
-                        possibilities.add(name);
+                    if (!calendarListEntry.isPrimary()) {
+                        if (name.contains("fungen")) {
+                            possibilities.add(0, name);
+                        } else {
+                            possibilities.add(name);
+                        }
                     }
+
                 });
 
                 String s = (String) JOptionPane.showInputDialog(
@@ -221,27 +233,71 @@ public class MainFrame extends javax.swing.JFrame implements PropertyChangeListe
                         possibilities.toArray(),
                         possibilities.get(0));
 
-                String calendarId = "primary";
 
-                for (CalendarListEntry calendarListEntry : calendars) {
-                    if (calendarListEntry.getSummary().equalsIgnoreCase(s)) {
-                        calendarId = calendarListEntry.getId();
+
+                if (!(s == null || s.isEmpty() || s.isBlank())) {
+                    String calendarId = "";
+
+                    for (CalendarListEntry calendarListEntry : calendars) {
+                        if (calendarListEntry.getSummary().equalsIgnoreCase(s)) {
+                            calendarId = calendarListEntry.getId();
+                        }
                     }
+
+                    int confirm = JOptionPane.showConfirmDialog(
+                            MainFrame.this,
+                            "This will delete all the other Exams in your Calendar! \nAre you sure that you want to continue?",
+                            "Warning",
+                            JOptionPane.WARNING_MESSAGE,
+                            JOptionPane.YES_NO_OPTION);
+
+
+                    double mult = 100 / ((exams.size() + calendarAPI.getEventsOfCalendar(calendarId).size() + 2));
+
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        note = "Deleting old exams...";
+
+                        List<Event> events = calendarAPI.getEventsOfCalendar(calendarId);
+                        System.out.println(events.size());
+                        for (Event e : events) {
+                            String summary = e.getSummary();
+                            if(summary.contains(" - ")) {
+                                if(StringUtils.isAllUpperCase(summary.split(" - ")[0].replaceAll("[0-9]",""))) {
+                                    calendarAPI.deleteEventFromCalendar(e, calendarId);
+                                }
+                            }
+
+                            progress = getProgress() + (int) mult;
+                            setProgress((int) progress);
+                        }
+
+                        note = "Exporting exams...";
+
+                        for (int i = 0; i < exams.size(); i++) {
+                            Exam e = exams.get(i);
+
+                            progress = getProgress() + (int) mult;
+                            setProgress((int) progress);
+
+                            if(e.isSelected()) calendarAPI.addEventToCalendar(e.toEvent(), calendarId);
+                        }
+
+                        progressMonitor.close();
+                        JOptionPane.showMessageDialog(MainFrame.this, "Exported Exams successfully!", "Units Exams", JOptionPane.INFORMATION_MESSAGE);
+                        System.exit(0);
+
+                    } else {
+                        progressMonitor.setProgress(0);
+                        progressMonitor.close();
+                        cancel(true);
+                    }
+
+
+                } else {
+                    progressMonitor.setProgress(0);
+                    progressMonitor.close();
+                    cancel(true);
                 }
-
-                double mult = 100 / (exams.size() - 1);
-
-                for (int i = 0; i < exams.size(); i++) {
-                    Exam e = exams.get(i);
-
-                    setProgress((int) (i * mult));
-                    
-                    if(e.isSelected()) calendarAPI.addEventToCalendar(e.toEvent(), calendarId);
-                }
-
-                progressMonitor.close();
-                JOptionPane.showMessageDialog(MainFrame.this, "Exported Exams successfully!", "Units Exams", JOptionPane.INFORMATION_MESSAGE);
-                System.exit(0);
 
 
             } catch (IOException e) {
@@ -253,8 +309,9 @@ public class MainFrame extends javax.swing.JFrame implements PropertyChangeListe
 
         @Override
         public void done() {
-            progressMonitor.setProgress(0);
 
         }
+
+
     }
 }

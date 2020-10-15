@@ -4,6 +4,9 @@
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="3"/>
     <Property name="title" type="java.lang.String" value="Untis Login"/>
+    <Property name="iconImages" type="java.util.List" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+      <Connection code="icons" type="code"/>
+    </Property>
   </Properties>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
@@ -84,14 +87,8 @@
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="userTextField">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="EweLo230"/>
-      </Properties>
     </Component>
     <Component class="javax.swing.JPasswordField" name="keyPasswordField">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="S4HQGN2QW7DWAYX6"/>
-      </Properties>
     </Component>
     <Component class="javax.swing.JButton" name="loginButton">
       <Properties>
@@ -105,9 +102,6 @@
       <Properties>
         <Property name="text" type="java.lang.String" value="Save Password"/>
       </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="savePasswordCheckBoxActionPerformed"/>
-      </Events>
     </Component>
   </SubComponents>
 </Form>

@@ -5,22 +5,33 @@
  */
 package untisexamcalendar;
 
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+import untisexamcalendar.utils.PasswordStorage;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
 
 /**
- *
  * @author EweLo
  */
 public class LoginFrame extends javax.swing.JFrame {
+
+    private Untis untis;
+    private Task task;
+    private ArrayList<Image> icons = new ArrayList<>();
 
     /**
      * Creates new form LoginFrame
      */
     public LoginFrame() {
+        icons.add(Toolkit.getDefaultToolkit().getImage(this.getClass().getClassLoader().getResource("icon-128x128.png")));
+        icons.add(Toolkit.getDefaultToolkit().getImage(this.getClass().getClassLoader().getResource("icon-16x16.png")));
+
         initComponents();
+        setLocationRelativeTo(null);
+
+        userTextField.setText(PasswordStorage.getUser());
+        keyPasswordField.setText(PasswordStorage.getKey());
     }
 
     /**
@@ -41,14 +52,11 @@ public class LoginFrame extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Untis Login");
+        setIconImages(icons);
 
         jLabel1.setText("Benutzer:");
 
         jLabel2.setText("Schlüssel:");
-
-        userTextField.setText("EweLo230");
-
-        keyPasswordField.setText("S4HQGN2QW7DWAYX6");
 
         loginButton.setText("Login");
         loginButton.addActionListener(new java.awt.event.ActionListener() {
@@ -58,11 +66,6 @@ public class LoginFrame extends javax.swing.JFrame {
         });
 
         savePasswordCheckBox.setText("Save Password");
-        savePasswordCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                savePasswordCheckBoxActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -109,27 +112,20 @@ public class LoginFrame extends javax.swing.JFrame {
 
     private void loginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginButtonActionPerformed
         if (!userTextField.getText().isEmpty() && keyPasswordField.getPassword().length != 0) {
-            try {
-                loginButton.setEnabled(false);
-                loginButton.setText("Loading ...");
-               
-                Untis untis = new Untis(userTextField.getText(), new String(keyPasswordField.getPassword()));
 
-                MainFrame mainFrame = new MainFrame(untis);
-                this.setVisible(false);
-                mainFrame.setVisible(true);
-            } catch (Exception e) {
-                loginButton.setEnabled(true);
-                loginButton.setText("Login");
-                
-                JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            if (savePasswordCheckBox.isSelected()) {
+                PasswordStorage.saveCredentials(userTextField.getText(), new String(keyPasswordField.getPassword()));
             }
+
+            userTextField.setEnabled(false);
+            keyPasswordField.setEnabled(false);
+            loginButton.setEnabled(false);
+            loginButton.setText("Loading ...");
+
+            task = new Task();
+            task.execute();
         }
     }//GEN-LAST:event_loginButtonActionPerformed
-
-    private void savePasswordCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_savePasswordCheckBoxActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_savePasswordCheckBoxActionPerformed
 
     /**
      * @param args the command line arguments
@@ -138,7 +134,7 @@ public class LoginFrame extends javax.swing.JFrame {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
          */
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -170,4 +166,35 @@ public class LoginFrame extends javax.swing.JFrame {
     private javax.swing.JCheckBox savePasswordCheckBox;
     private javax.swing.JTextField userTextField;
     // End of variables declaration//GEN-END:variables
+
+
+    class Task extends SwingWorker<Void, Void> {
+
+        @Override
+        protected Void doInBackground() {
+            try {
+                untis = new Untis(userTextField.getText(), new String(keyPasswordField.getPassword()));
+                MainFrame mainFrame = new MainFrame(untis);
+                setVisible(false);
+                mainFrame.setVisible(true);
+            } catch (Exception e) {
+                e.printStackTrace();
+
+                userTextField.setEnabled(true);
+                keyPasswordField.setEnabled(true);
+                loginButton.setEnabled(true);
+                loginButton.setText("Login");
+
+                JOptionPane.showMessageDialog(LoginFrame.this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+
+
+            return null;
+        }
+
+        @Override
+        public void done() {
+            System.out.println("done");
+        }
+    }
 }

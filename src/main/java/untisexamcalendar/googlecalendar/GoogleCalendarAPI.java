@@ -63,65 +63,19 @@ public class GoogleCalendarAPI {
     }
 
     public List<CalendarListEntry> getCalendars() throws IOException {
-        CalendarList list = calendarService.calendarList().list().execute();
-        return list.getItems();
+        return calendarService.calendarList().list().execute().getItems();
+    }
+
+    public List<Event> getEventsOfCalendar(String calendarId) throws IOException {
+        return calendarService.events().list(calendarId).execute().getItems();
     }
 
     public void addEventToCalendar(Event event, String calendarId) throws IOException {
         calendarService.events().insert(calendarId, event).execute();
     }
 
-
-    public static void main(String... args) throws IOException, GeneralSecurityException {
-        /*GoogleCalendarAPI googleCalendarAPI = new GoogleCalendarAPI();
-
-        googleCalendarAPI.login();
-
-        googleCalendarAPI.getCalendars().forEach(calendarListEntry -> System.out.println(calendarListEntry.getSummary() + " - " + calendarListEntry.getEtag() + " - " + calendarListEntry.getId()));
-
-        Event event = new Event();
-        event.setSummary("Test");
-
-        DateTime startDateTime = new DateTime(System.currentTimeMillis());
-        EventDateTime start = new EventDateTime()
-                .setDateTime(startDateTime)
-                .setTimeZone("Europe/Berlin");
-        event.setStart(start);
-
-        DateTime endDateTime = new DateTime(System.currentTimeMillis() + 3600000);
-        EventDateTime end = new EventDateTime()
-                .setDateTime(endDateTime)
-                .setTimeZone("Europe/Berlin");
-        event.setEnd(end);
-
-        googleCalendarAPI.calendarService.events().insert("bj6fqpurcg57c05kohvsf7fuco@group.calendar.google.com", event).execute();*/
-
-        /*// Build a new authorized API client service.
-        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
-                .setApplicationName(APPLICATION_NAME)
-                .build();
-
-        // List the next 10 events from the primary calendar.
-        DateTime now = new DateTime(System.currentTimeMillis());
-        Events events = service.events().list("primary")
-                .setMaxResults(10)
-                .setTimeMin(now)
-                .setOrderBy("startTime")
-                .setSingleEvents(true)
-                .execute();
-        List<Event> items = events.getItems();
-        if (items.isEmpty()) {
-            System.out.println("No upcoming events found.");
-        } else {
-            System.out.println("Upcoming events");
-            for (Event event : items) {
-                DateTime start = event.getStart().getDateTime();
-                if (start == null) {
-                    start = event.getStart().getDate();
-                }
-                System.out.printf("%s (%s)\n", event.getSummary(), start);
-            }
-        }*/
+    public void deleteEventFromCalendar(Event event, String calendarId) throws IOException {
+        calendarService.events().delete(calendarId, event.getId()).execute();
     }
+
 }
